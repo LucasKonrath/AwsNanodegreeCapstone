@@ -1,111 +1,90 @@
 import dateFormat from 'dateformat'
 import { History } from 'history'
-import update from 'immutability-helper'
 import * as React from 'react'
 import {
   Button,
-  Checkbox,
   Divider,
   Grid,
   Header,
   Icon,
   Input,
-  Image,
   Loader
 } from 'semantic-ui-react'
 
-import { createTodo, deleteTodo, getTodos, patchTodo } from '../api/todos-api'
+import { createPost as createPost, deletePost, getPosts} from '../api/posts-api'
 import Auth from '../auth/Auth'
-import { Todo } from '../types/Todo'
+import { Post } from '../types/Post'
 
-interface TodosProps {
+interface PostsProps {
   auth: Auth
   history: History
 }
 
-interface TodosState {
-  todos: Todo[]
-  newTodoName: string
-  loadingTodos: boolean,
-  newTodoDescription: string
+interface PostsState {
+  posts: Post[]
+  newPostName: string
+  loadingPosts: boolean,
+  newPostDescription: string
 }
 
-export class Todos extends React.PureComponent<TodosProps, TodosState> {
-  state: TodosState = {
-    todos: [],
-    newTodoName: '',
-    loadingTodos: true,
-    newTodoDescription: ''
+export class Posts extends React.PureComponent<PostsProps, PostsState> {
+  state: PostsState = {
+    posts: [],
+    newPostName: '',
+    loadingPosts: true,
+    newPostDescription: ''
   }
 
   handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ newTodoName: event.target.value })
+    this.setState({ newPostName: event.target.value })
   }
 
   handleDescriptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ newTodoDescription: event.target.value })
+    this.setState({ newPostDescription: event.target.value })
   }
 
-  onEditButtonClick = (todoId: string) => {
-    this.props.history.push(`/posts/${todoId}/view`)
+  onEditButtonClick = (postId: string) => {
+    this.props.history.push(`/posts/${postId}/view`)
   }
 
-  onTodoCreate = async (event: React.ChangeEvent<HTMLButtonElement>) => {
+  onPostCreate = async (event: React.ChangeEvent<HTMLButtonElement>) => {
     try {
       const dueDate = this.calculateDueDate()
-      const newTodo = await createTodo(this.props.auth.getIdToken(), {
-        name: this.state.newTodoName,
+      const newTodo = await createPost(this.props.auth.getIdToken(), {
+        name: this.state.newPostName,
         dueDate,
-        title: this.state.newTodoName,
-        description: this.state.newTodoDescription
+        title: this.state.newPostName,
+        description: this.state.newPostDescription
       })
       this.setState({
-        todos: [...this.state.todos, newTodo],
-        newTodoName: ''
+        posts: [...this.state.posts, newTodo],
+        newPostName: ''
       })
     } catch {
-      alert('Todo creation failed')
+      alert('Post creation failed')
     }
   }
 
-  onTodoDelete = async (todoId: string) => {
+  onPostDelete = async (postId: string) => {
     try {
-      await deleteTodo(this.props.auth.getIdToken(), todoId)
+      await deletePost(this.props.auth.getIdToken(), postId)
       this.setState({
-        todos: this.state.todos.filter(todo => todo.postId !== todoId)
+        posts: this.state.posts.filter(todo => todo.postId !== postId)
       })
     } catch {
-      alert('Todo deletion failed')
-    }
-  }
-
-  onTodoCheck = async (pos: number) => {
-    try {
-      const todo = this.state.todos[pos]
-      await patchTodo(this.props.auth.getIdToken(), todo.postId, {
-        name: todo.name,
-        dueDate: todo.dueDate,
-        done: !todo.done
-      })
-      this.setState({
-        todos: update(this.state.todos, {
-          [pos]: { done: { $set: !todo.done } }
-        })
-      })
-    } catch {
-      alert('Todo deletion failed')
+      alert('Post deletion failed')
     }
   }
 
   async componentDidMount() {
     try {
-      const todos = await getTodos(this.props.auth.getIdToken())
+      const posts = await getPosts(this.props.auth.getIdToken())
       this.setState({
-        todos,
-        loadingTodos: false
+        posts: posts,
+        loadingPosts: false
       })
     } catch (e) {
-      alert(`Failed to fetch todos: ${e}`)
+      alert(`Failed to fetch posts: ${e}`)
     }
   }
 
@@ -114,14 +93,14 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
       <div>
         <Header as="h1">NanoDegree Overflow</Header>
 
-        {this.renderCreateTodoInput()}
+        {this.renderCreatePostInput()}
 
-        {this.renderTodos()}
+        {this.renderPosts()}
       </div>
     )
   }
 
-  renderCreateTodoInput() {
+  renderCreatePostInput() {
     return (
       <Grid container stackable verticalAlign="middle">
       <Grid.Row>
@@ -132,7 +111,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
               labelPosition: 'left',
               icon: 'add',
               content: 'Create a new Post',
-              onClick: this.onTodoCreate
+              onClick: this.onPostCreate
             }}
             fluid
             actionPosition="left"
@@ -154,8 +133,8 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
     )
   }
 
-  renderTodos() {
-    if (this.state.loadingTodos) {
+  renderPosts() {
+    if (this.state.loadingPosts) {
       return this.renderLoading()
     }
 
@@ -175,31 +154,31 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
   renderTodosList() {
     return (
       <Grid padded>
-        {this.state.todos.map((todo, pos) => {
+        {this.state.posts.map((post) => {
           return (
-            <Grid.Row key={todo.postId}>
+            <Grid.Row key={post.postId}>
               <Grid.Column width={3} verticalAlign="middle">
 
-              {todo.done && (
+              {post.done && (
                 <h2 style={{ color: 'red' }}>Closed</h2>
               )}
 
-              {!todo.done && (
+              {!post.done && (
                 <h2 style={{ color: 'green' }}>Open</h2>
               )}
               </Grid.Column>
               <Grid.Column width={9} verticalAlign="middle">
-                <h1 onClick={() => this.onEditButtonClick(todo.postId)}>{todo.title}</h1>
+                <h1 onClick={() => this.onEditButtonClick(post.postId)}>{post.title}</h1>
               </Grid.Column>
               <Grid.Column width={3} floated="right">
-                {todo.dueDate}
+                {post.dueDate}
               </Grid.Column>
 
               <Grid.Column width={1} floated="right">
                 <Button
                   icon
                   color="red"
-                  onClick={() => this.onTodoDelete(todo.postId)}
+                  onClick={() => this.onPostDelete(post.postId)}
                 >
                   <Icon name="delete" />
                 </Button>

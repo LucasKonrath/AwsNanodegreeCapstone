@@ -1,4 +1,4 @@
-export interface Todo {
+export interface Post {
   postId: string
   createdAt: string
   name: string

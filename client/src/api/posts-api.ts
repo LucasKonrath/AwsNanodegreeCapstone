@@ -1,12 +1,11 @@
 import { apiEndpoint } from '../config'
-import { Todo } from '../types/Todo';
-import { CreateTodoRequest } from '../types/CreateTodoRequest';
+import { Post } from '../types/Post';
+import { CreatePostRequest } from '../types/CreatePostRequest';
 import { CreateCommentRequest } from '../types/CreateCommentRequest';
 import Axios from 'axios'
-import { UpdateTodoRequest } from '../types/UpdateTodoRequest';
 import { CommentModel } from '../types/CommentModel';
 
-export async function getTodos(idToken: string): Promise<Todo[]> {
+export async function getPosts(idToken: string): Promise<Post[]> {
   console.log('Fetching posts')
 
   const response = await Axios.get(`${apiEndpoint}/posts`, {
@@ -32,11 +31,11 @@ export async function getComments(idToken: string, postId: string): Promise<Comm
   return response.data.items
 }
 
-export async function createTodo(
+export async function createPost(
   idToken: string,
-  newTodo: CreateTodoRequest
-): Promise<Todo> {
-  const response = await Axios.post(`${apiEndpoint}/posts`,  JSON.stringify(newTodo), {
+  newPost: CreatePostRequest
+): Promise<Post> {
+  const response = await Axios.post(`${apiEndpoint}/posts`,  JSON.stringify(newPost), {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${idToken}`
@@ -47,9 +46,9 @@ export async function createTodo(
 
 export async function createComment(
   idToken: string,
-  newTodo: CreateCommentRequest
+  newComment: CreateCommentRequest
 ): Promise<CommentModel> {
-  const response = await Axios.post(`${apiEndpoint}/comment`,  JSON.stringify(newTodo), {
+  const response = await Axios.post(`${apiEndpoint}/comment`,  JSON.stringify(newComment), {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${idToken}`
@@ -58,24 +57,11 @@ export async function createComment(
   return response.data.item
 }
 
-export async function patchTodo(
+export async function deletePost(
   idToken: string,
-  todoId: string,
-  updatedTodo: UpdateTodoRequest
+  postId: string
 ): Promise<void> {
-  await Axios.patch(`${apiEndpoint}/todos/${todoId}`, JSON.stringify(updatedTodo), {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${idToken}`
-    }
-  })
-}
-
-export async function deleteTodo(
-  idToken: string,
-  todoId: string
-): Promise<void> {
-  await Axios.delete(`${apiEndpoint}/posts/${todoId}`, {
+  await Axios.delete(`${apiEndpoint}/posts/${postId}`, {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${idToken}`
@@ -93,21 +79,4 @@ export async function closePost(
       'Authorization': `Bearer ${idToken}`
     }
   })
-}
-
-export async function getUploadUrl(
-  idToken: string,
-  todoId: string
-): Promise<string> {
-  const response = await Axios.post(`${apiEndpoint}/posts/${todoId}/attachment`, '', {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${idToken}`
-    }
-  })
-  return response.data.uploadUrl
-}
-
-export async function uploadFile(uploadUrl: string, file: Buffer): Promise<void> {
-  await Axios.put(uploadUrl, file)
 }
